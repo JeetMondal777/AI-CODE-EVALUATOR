@@ -1,0 +1,191 @@
+[
+  {
+    "title": "Two Sum",
+    "difficulty": "Easy",
+    "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. Each input has exactly one solution, and you may not use the same element twice.",
+    "exampleInput": {
+      "nums": [2, 7, 11, 15],
+      "target": 9
+    },
+    "exampleOutput": [0, 1],
+    "testCases": [
+      {
+        "input": { "nums": [3, 2, 4], "target": 6 },
+        "output": [1, 2]
+      },
+      {
+        "input": { "nums": [3, 3], "target": 6 },
+        "output": [0, 1]
+      }
+    ]
+  },
+  {
+    "title": "Add Two Numbers",
+    "difficulty": "Medium",
+    "description": "You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list.",
+    "exampleInput": {
+      "l1": [2, 4, 3],
+      "l2": [5, 6, 4]
+    },
+    "exampleOutput": [7, 0, 8],
+    "testCases": [
+      {
+        "input": { "l1": [0], "l2": [0] },
+        "output": [0]
+      },
+      {
+        "input": { "l1": [9, 9, 9, 9, 9, 9, 9], "l2": [9, 9, 9, 9] },
+        "output": [8, 9, 9, 9, 0, 0, 0, 1]
+      }
+    ]
+  },
+  {
+    "title": "Longest Substring Without Repeating Characters",
+    "difficulty": "Medium",
+    "description": "Given a string s, find the length of the longest substring without repeating characters.",
+    "exampleInput": "abcabcbb",
+    "exampleOutput": 3,
+    "testCases": [
+      {
+        "input": "bbbbb",
+        "output": 1
+      },
+      {
+        "input": "pwwkew",
+        "output": 3
+      }
+    ]
+  },
+  {
+    "title": "Palindrome Number",
+    "difficulty": "Easy",
+    "description": "Given an integer x, return true if x is palindrome integer. An integer is a palindrome when it reads the same backward as forward.",
+    "exampleInput": 121,
+    "exampleOutput": true,
+    "testCases": [
+      {
+        "input": -121,
+        "output": false
+      },
+      {
+        "input": 10,
+        "output": false
+      }
+    ]
+  },
+  {
+    "title": "Merge Two Sorted Lists",
+    "difficulty": "Easy",
+    "description": "Merge two sorted linked lists and return it as a new sorted list. The new list should be made by splicing together the nodes of the first two lists.",
+    "exampleInput": {
+      "list1": [1, 2, 4],
+      "list2": [1, 3, 4]
+    },
+    "exampleOutput": [1, 1, 2, 3, 4, 4],
+    "testCases": [
+      {
+        "input": { "list1": [], "list2": [] },
+        "output": []
+      },
+      {
+        "input": { "list1": [], "list2": [0] },
+        "output": [0]
+      }
+    ]
+  },
+  {
+    "title": "Search in Rotated Sorted Array",
+    "difficulty": "Medium",
+    "description": "Given the array nums after the rotation and an integer target, return the index of target if it is in nums, or -1 if it is not in nums.",
+    "exampleInput": {
+      "nums": [4, 5, 6, 7, 0, 1, 2],
+      "target": 0
+    },
+    "exampleOutput": 4,
+    "testCases": [
+      {
+        "input": { "nums": [4, 5, 6, 7, 0, 1, 2], "target": 3 },
+        "output": -1
+      },
+      {
+        "input": { "nums": [1], "target": 0 },
+        "output": -1
+      }
+    ]
+  },
+  {
+    "title": "Trapping Rain Water",
+    "difficulty": "Hard",
+    "description": "Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.",
+    "exampleInput": [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1],
+    "exampleOutput": 6,
+    "testCases": [
+      {
+        "input": [4, 2, 0, 3, 2, 5],
+        "output": 9
+      },
+      {
+        "input": [2, 0, 2],
+        "output": 2
+      }
+    ]
+  },
+  {
+    "title": "Median of Two Sorted Arrays",
+    "difficulty": "Hard",
+    "description": "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays. The overall run time complexity should be O(log (m+n)).",
+    "exampleInput": {
+      "nums1": [1, 3],
+      "nums2": [2]
+    },
+    "exampleOutput": 2.0,
+    "testCases": [
+      {
+        "input": { "nums1": [1, 2], "nums2": [3, 4] },
+        "output": 2.5
+      },
+      {
+        "input": { "nums1": [0, 0], "nums2": [0, 0] },
+        "output": 0.0
+      }
+    ]
+  },
+  {
+    "title": "Container With Most Water",
+    "difficulty": "Medium",
+    "description": "Given n non-negative integers a1, a2, ..., an where each represents a point at coordinate (i, ai), n vertical lines are drawn such that the two endpoints of the line i is at (i, ai). Find two lines that together with the x-axis forms a container, such that the container contains the most water.",
+    "exampleInput": [1, 8, 6, 2, 5, 4, 8, 3, 7],
+    "exampleOutput": 49,
+    "testCases": [
+      {
+        "input": [1, 1],
+        "output": 1
+      },
+      {
+        "input": [4, 3, 2, 1, 4],
+        "output": 16
+      }
+    ]
+  },
+  {
+    "title": "Valid Parentheses",
+    "difficulty": "Easy",
+    "description": "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.",
+    "exampleInput": "()[]{}",
+    "exampleOutput": true,
+    "testCases": [
+      {
+        "input": "(]",
+        "output": false
+      },
+      {
+        "input": "([)]",
+        "output": false
+      },
+      {
+        "input": "{[]}",
+        "output": true
+      }
+    ]
+  }
+]
