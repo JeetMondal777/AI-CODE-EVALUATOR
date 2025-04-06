@@ -22,7 +22,7 @@ Code:
 ${code}
 
 Detect if this code is:
-- "copied code" (even if partially from GeeksforGeeks, StackOverflow, GitHub, or AI tools)
+- "copied code" (even if partially from GeeksforGeeks, StackOverflow, GitHub, or AI agnet tools like chatGPT, Bard, Deepseek, BlackBox etc and if the code is so good at following best practices then also it is a copied code.)
 - "not copied code" (original, self-written, basic print functions, loops, reursion, mathematical operations or basic logical operations or basic beginner friendly code etc.)
 
 Respond only with one of the following:
