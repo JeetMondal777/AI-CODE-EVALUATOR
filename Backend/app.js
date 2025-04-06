@@ -23,11 +23,11 @@ ${code}
 
 Detect if this code is:
 - "copied code" (even if partially from GeeksforGeeks, StackOverflow, GitHub, or AI tools)
-- "not copied code" (original, self-written)
+- "not copied code" (original, self-written, basic print functions, loops, reursion, mathematical operations or basic logical operations or basic beginner friendly code etc.)
 
-Respond only with:
-- "copied code"
-- "not copied code"`;
+Respond only with one of the following:
+- copied code
+- not copied code`;
 
   const response = await axios.post(
     "https://openrouter.ai/api/v1/chat/completions",
@@ -47,7 +47,13 @@ Respond only with:
     }
   );
 
-  return response.data.choices[0].message.content;
+  const reply = response.data.choices[0].message.content.toLowerCase();
+  if (reply.includes("not copied code")){
+    return "not copied code";
+  }else{
+    return "copied code";
+  }
+  // return "unknown";
 }
 
 async function analyzeCode(code, question) {
@@ -142,26 +148,13 @@ Respond with only the suggestion.`;
   return response.data.choices[0].message.content.trim();
 }
 
+// ... (same imports as before)
+
 app.post("/compile", async (req, res) => {
   const { code, language, question } = req.body;
 
   if (!code || !language || !question) {
     return res.status(400).json({ error: "Missing code, language, or question" });
-  }
-
-  let isCopied = false;
-  let plagiarismResult = "Code appears original.";
-
-  if (process.env.NODE_ENV === "production") {
-    plagiarismResult = await checkPlagiarism(code);
-    isCopied = plagiarismResult.toLowerCase().includes("copied code");
-
-    if (isCopied) {
-      return res.json({
-        error: "Code detected as plagiarized or copied.",
-        plagiarism: plagiarismResult,
-      });
-    }
   }
 
   const extension = language === "cpp" ? "cpp" : "c";
@@ -173,11 +166,12 @@ app.post("/compile", async (req, res) => {
 
   try {
     fs.writeFileSync(filePath, code);
-    const compileCommand = `gcc "${filePath}" -o "${outputPath}"`;
+    const compileCommand = `gcc -Wall -Werror -o "${outputPath}" "${filePath}"`;
 
     exec(compileCommand, async (compileErr, _, compileStderr) => {
       const analysis = await analyzeCode(code, question);
 
+      // Step 1: Return early on compilation error
       if (compileErr) {
         return res.json({
           error: compileStderr,
@@ -186,6 +180,7 @@ app.post("/compile", async (req, res) => {
         });
       }
 
+      // Step 2: Run test cases
       const testResults = [];
       const testCases = question.testCases || [];
 
@@ -193,9 +188,10 @@ app.post("/compile", async (req, res) => {
         const input = testCase.input;
         const expectedOutput = [testCase.output];
 
-        const runCommand = os.platform() === "win32"
-          ? `echo "${input}" | cmd /c ${execPath}`
-          : `echo "${input}" | ${execPath}`;
+        const runCommand =
+          os.platform() === "win32"
+            ? `echo "${input}" | cmd /c ${execPath}`
+            : `echo "${input}" | ${execPath}`;
 
         const result = await new Promise((resolve) => {
           exec(runCommand, async (err, stdout) => {
@@ -233,6 +229,23 @@ app.post("/compile", async (req, res) => {
         testResults.push(result);
       }
 
+      // Step 3: Only check plagiarism if compilation was successful AND not in dev
+      let plagiarismResult = "not checked";
+      if (process.env.NODE_ENV !== "development") {
+        try {
+          plagiarismResult = await checkPlagiarism(code);
+          if (plagiarismResult === "copied code") {
+            return res.json({
+              error: "Code detected as plagiarized or copied.",
+              plagiarism: plagiarismResult,
+            });
+          }
+        } catch (err) {
+          console.error("Plagiarism check failed:", err.message);
+        }
+      }
+
+      // Step 4: Final response
       return res.json({
         output: testResults.every((t) => t.passed)
           ? "✅ All test cases passed."
@@ -247,6 +260,7 @@ app.post("/compile", async (req, res) => {
     return res.status(500).json({ error: "Server error: " + err.message });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Compiler backend running on http://localhost:${PORT}`);

@@ -32,19 +32,24 @@ export default function QuestionPage() {
       });
 
       const result = await response.json();
+      console.log(result);
+      
 
-      if (result.error?.toLowerCase().includes("plagiarized")) {
-        setShowPlagiarismModal(true);
+      if (result.plagiarism === "copied code") {
         setPlagiarism(result.plagiarism);
+        setShowPlagiarismModal(true);
         return;
       }
 
-      localStorage.setItem("codeFeedback", JSON.stringify({
-        code,
-        analysis: result.codeAnalysis || {},
-        testResults: result.testResults || [],
-        compilationError: result.error || null,
-      }));
+      localStorage.setItem(
+        "codeFeedback",
+        JSON.stringify({
+          code,
+          analysis: result.codeAnalysis || {},
+          testResults: result.testResults || [],
+          compilationError: result.error || null,
+        })
+      );
 
       if (!result.error) {
         navigate("/code");
@@ -141,12 +146,6 @@ export default function QuestionPage() {
         {output && (
           <div className="mt-4 bg-black p-4 rounded-xl text-sm text-white whitespace-pre-wrap border border-zinc-700">
             {output}
-          </div>
-        )}
-
-        {plagiarism && !showPlagiarismModal && (
-          <div className="mt-2 bg-yellow-900 text-yellow-300 p-3 rounded-xl text-sm border border-yellow-600 font-mono">
-            {plagiarism}
           </div>
         )}
       </div>
