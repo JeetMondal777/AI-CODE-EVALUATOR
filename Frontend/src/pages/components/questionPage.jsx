@@ -30,7 +30,8 @@ export default function QuestionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language: "c", question }),
       });
-
+      console.log(response);
+      
       const result = await response.json();
       console.log(result);
       
@@ -41,15 +42,32 @@ export default function QuestionPage() {
         return;
       }
 
+      let safeCodeAnalysis = {};
+      try {
+        if (typeof result.codeAnalysis === "string") {
+          // Try parsing if it's a JSON string
+          safeCodeAnalysis = JSON.parse(result.codeAnalysis);
+        } else if (typeof result.codeAnalysis === "object" && result.codeAnalysis !== null) {
+          safeCodeAnalysis = result.codeAnalysis;
+        } else {
+          safeCodeAnalysis = { error: "Invalid format for code analysis" };
+        }
+      } catch (err) {
+        console.error("Failed to parse code analysis:", err);
+        safeCodeAnalysis = { error: "Failed to parse code analysis" };
+      }
+      
       localStorage.setItem(
         "codeFeedback",
         JSON.stringify({
           code,
-          analysis: result.codeAnalysis || {},
+          analysis: safeCodeAnalysis,
           testResults: result.testResults || [],
           compilationError: result.error || null,
+          improvementSuggestion: result.improvementSuggestion || null,
         })
       );
+      
 
       if (!result.error) {
         navigate("/code");

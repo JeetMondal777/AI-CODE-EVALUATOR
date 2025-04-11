@@ -22,8 +22,8 @@ Code:
 ${code}
 
 Detect if this code is:
-- "copied code" (even if partially from GeeksforGeeks, StackOverflow, GitHub, or AI agnet tools like chatGPT, Bard, Deepseek, BlackBox etc and if the code is so good at following best practices then also it is a copied code.)
-- "not copied code" (original, self-written, basic print functions, loops, reursion, mathematical operations or basic logical operations or basic beginner friendly code etc.)
+- "copied code" (even if partially from GeeksforGeeks, StackOverflow, GitHub, or AI agent tools like chatGPT, Bard, Deepseek, BlackBox etc and if the code is so good at following best practices then also it is a copied code.)
+- "not copied code" (original, self-written, basic print functions, loops, recursion, mathematical operations or basic logical operations etc.)
 
 Respond only with one of the following:
 - copied code
@@ -48,12 +48,7 @@ Respond only with one of the following:
   );
 
   const reply = response.data.choices[0].message.content.toLowerCase();
-  if (reply.includes("not copied code")){
-    return "not copied code";
-  }else{
-    return "copied code";
-  }
-  // return "unknown";
+  return reply.includes("not copied code") ? "not copied code" : "copied code";
 }
 
 async function analyzeCode(code, question) {
@@ -85,30 +80,49 @@ Only return a JSON object like this:
   "compilationTime": "...",
   "codeQuality": "...",
   "acceptable": "Yes/No"
-}`;
-
-  const response = await axios.post(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      model: "deepseek/deepseek-chat",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.4,
-      max_tokens: 700,
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-        "HTTP-Referer": "http://localhost:3000",
-        "X-Title": "Compiler Analyzer",
-      },
-    }
-  );
+}
+`;
 
   try {
-    return JSON.parse(response.data.choices[0].message.content);
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "deepseek/deepseek-chat",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.4,
+        max_tokens: 700,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+          "HTTP-Referer": "http://localhost:3000",
+          "X-Title": "Compiler Analyzer",
+        },
+      }
+    );
+
+    const content = response.data.choices[0].message.content.trim();
+
+    const start = content.indexOf("{");
+    const end = content.lastIndexOf("}");
+
+    if (start !== -1 && end !== -1) {
+      const jsonString = content.substring(start, end + 1);
+      return JSON.parse(jsonString);
+    } else {
+      throw new Error("JSON block not found in response");
+    }
   } catch (err) {
-    return { error: "Failed to parse code analysis" };
+    console.error("Failed to parse code analysis response:", err.message);
+    return {
+      suggestions: "Could not analyze suggestions.",
+      timeComplexity: "Unknown",
+      spaceComplexity: "Unknown",
+      compilationTime: "Unknown",
+      codeQuality: "Needs Improvement",
+      acceptable: "No",
+    };
   }
 }
 
@@ -148,7 +162,29 @@ Respond with only the suggestion.`;
   return response.data.choices[0].message.content.trim();
 }
 
-// ... (same imports as before)
+async function generateImprovementSuggestion(code, language, title) {
+  const prompt = `The following code written in "${language}" solves the problem titled "${title}". It passes all test cases. Suggest an improved approach to solve it more efficiently in about 300 words. Don't include any full code but you can provide short example code for better understanding and also explain the improved approach:\n\n${code}.\n\n and also leave some space below after every point explanation to make it more readable`;
+
+  const response = await axios.post(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      model: "deepseek/deepseek-chat",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.5,
+      max_tokens: 500,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        "HTTP-Referer": "http://localhost:3000",
+        "X-Title": "Improvement Suggestion Generator",
+      },
+    }
+  );
+
+  return response.data.choices[0].message.content.trim();
+}
 
 app.post("/compile", async (req, res) => {
   const { code, language, question } = req.body;
@@ -171,7 +207,6 @@ app.post("/compile", async (req, res) => {
     exec(compileCommand, async (compileErr, _, compileStderr) => {
       const analysis = await analyzeCode(code, question);
 
-      // Step 1: Return early on compilation error
       if (compileErr) {
         return res.json({
           error: compileStderr,
@@ -180,56 +215,52 @@ app.post("/compile", async (req, res) => {
         });
       }
 
-      // Step 2: Run test cases
-      const testResults = [];
-      const testCases = question.testCases || [];
-
-      for (const testCase of testCases) {
-        const input = testCase.input;
-        const expectedOutput = [testCase.output];
-
-        const runCommand =
-          os.platform() === "win32"
-            ? `echo "${input}" | cmd /c ${execPath}`
-            : `echo "${input}" | ${execPath}`;
-
-        const result = await new Promise((resolve) => {
-          exec(runCommand, async (err, stdout) => {
-            let actual = String(stdout).trim();
-            let expected = String(expectedOutput).trim();
-            let passed = false;
-
-            try {
-              const parsedActual = JSON.parse(actual);
-              const parsedExpected = JSON.parse(`[${expected}]`);
-              passed =
-                Array.isArray(parsedActual) &&
-                Array.isArray(parsedExpected) &&
-                parsedActual.length === parsedExpected.length &&
-                parsedActual.every((val, i) => val === parsedExpected[i]);
-            } catch {
-              passed = actual === expected;
-            }
-
-            let suggestion = null;
-            if (!passed) {
-              suggestion = await generateFixSuggestion(code, input, expectedOutput);
-            }
-
-            resolve({
-              input,
-              expectedOutput: String(expectedOutput),
-              actualOutput: stdout.trim(),
-              passed,
-              suggestion,
-            });
-          });
-        });
-
-        testResults.push(result);
+      const testCase = question.testCases?.[0];
+      if (!testCase) {
+        return res.status(400).json({ error: "No test case provided." });
       }
 
-      // Step 3: Only check plagiarism if compilation was successful AND not in dev
+      const input = testCase.input;
+      const expectedOutput = testCase.output;
+
+      const runCommand =
+        os.platform() === "win32"
+          ? `echo "${input}" | cmd /c ${execPath}`
+          : `echo "${input}" | ${execPath}`;
+
+      const result = await new Promise((resolve) => {
+        exec(runCommand, async (err, stdout) => {
+          let actual = String(stdout).trim();
+          let expected = String(expectedOutput).trim();
+          let passed = false;
+
+          try {
+            const parsedActual = JSON.parse(actual);
+            const parsedExpected = JSON.parse(`[${expected}]`);
+            passed =
+              Array.isArray(parsedActual) &&
+              Array.isArray(parsedExpected) &&
+              parsedActual.length === parsedExpected.length &&
+              parsedActual.every((val, i) => val === parsedExpected[i]);
+          } catch {
+            passed = actual === expected;
+          }
+
+          let suggestion = null;
+          if (!passed) {
+            suggestion = await generateFixSuggestion(code, input, expectedOutput);
+          }
+
+          resolve({
+            input,
+            expectedOutput: String(expectedOutput),
+            actualOutput: stdout.trim(),
+            passed,
+            suggestion,
+          });
+        });
+      });
+
       let plagiarismResult = "not checked";
       if (process.env.NODE_ENV !== "development") {
         try {
@@ -245,14 +276,17 @@ app.post("/compile", async (req, res) => {
         }
       }
 
-      // Step 4: Final response
+      let improvementSuggestion = null;
+      if (result.passed) {
+        improvementSuggestion = await generateImprovementSuggestion(code, language, question.title);
+      }
+
       return res.json({
-        output: testResults.every((t) => t.passed)
-          ? "✅ All test cases passed."
-          : "⚠️ Some test cases failed.",
+        output: result.passed ? "✅ Test case passed." : "⚠️ Test case failed.",
         plagiarism: plagiarismResult,
-        testResults,
+        testResults: [result],
         codeAnalysis: analysis,
+        improvementSuggestion,
       });
     });
   } catch (err) {
@@ -260,7 +294,6 @@ app.post("/compile", async (req, res) => {
     return res.status(500).json({ error: "Server error: " + err.message });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Compiler backend running on http://localhost:${PORT}`);
