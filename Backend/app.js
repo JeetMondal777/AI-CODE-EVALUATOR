@@ -295,6 +295,10 @@ app.post("/compile", async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("Compiler backend is running.");
+})
+
 app.listen(PORT, () => {
   console.log(`Compiler backend running on http://localhost:${PORT}`);
 });

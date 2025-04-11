@@ -25,7 +25,7 @@ export default function CodeFeedback() {
       {/* Top Section: Code + Suggestions */}
       <div className="h-[70vh] grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
         {/* Code Panel */}
-        <div className="bg-[#1A1A1A] rounded-2xl p-4 shadow-xl overflow-auto">
+        <div className="bg-[#1A1A1A] rounded-2xl p-4 shadow-xl scrollbar-none overflow-auto">
           <h2 className="text-xl font-semibold text-white mb-4">Code</h2>
           <pre className="whitespace-pre-wrap text-sm text-yellow-200">
             {code}
@@ -33,7 +33,7 @@ export default function CodeFeedback() {
         </div>
 
         {/* Suggestions Panel */}
-        <div className="bg-[#1A1A1A] rounded-2xl p-4 shadow-xl overflow-auto">
+        <div className="bg-[#1A1A1A] rounded-2xl p-4 shadow-xl scrollbar-none overflow-auto">
           <h2 className="text-xl font-semibold text-yellow-300 mb-4">
             Suggestions
           </h2>
