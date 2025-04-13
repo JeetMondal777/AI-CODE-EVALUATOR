@@ -11,12 +11,24 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.disable("x-powered-by");
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ai-code-evaluator-frontend.vercel.app"
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
   methods: ["GET", "POST"],
 }));
+
 app.use(express.json());
 
 console.log("DeepSeek API Key loaded?", !!process.env.DEEPSEEK_API_KEY);
